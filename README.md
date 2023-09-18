@@ -41,7 +41,7 @@ python midirec.py -l
 python midirec.py
 
 # record in auto mode with n seconds silence timeout
-# when timeout happens the current track will be stored and the recording starts again with a new midi track when receiving the next start event
+# when timeout happens the current track will be stored and the recording starts again with a new midi track
 python midirec.py -a 30
 2023-09-18 19:23:29.854 Waiting for first event ...
 2023-09-18 19:26:52.791 Recording started

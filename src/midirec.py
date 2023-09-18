@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 import sys, time, logging, argparse, rtmidi, mido
-from typing import Any
 from datetime import datetime, timedelta
 from mido import Message, MidiTrack, MidiFile
 

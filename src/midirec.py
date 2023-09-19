@@ -71,7 +71,7 @@ class MidiRecorder(object):
         self.midiin.set_callback(self)
 
     def __call__(self, event, data=None):
-        """This function is called for every inconmning event."""
+        """This function is called for every incoming event."""
         if self.msg: # process once very first event
             msg = self.msg
             self.msg = None
@@ -79,15 +79,15 @@ class MidiRecorder(object):
         message, deltatime = event
         self.activesense += deltatime
         if message[0] != 254: # ignore active sense
-            self.time_last_msg = datetime.now()
             miditime = int(round(mido.second2tick(self.activesense, self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
-            if self.debug:
-                logging.info('deltatime: ' + str(deltatime) + ' msg: ' + str(message) + ' activecomp: ' + str(self.activesense))
             if message[0] == 144:
                 self.track.append(Message('note_on', note=message[1], velocity=message[2], time=miditime))
                 self.activesense = 0
             elif message[0] == 176:
                 self.track.append(Message('control_change', channel=1, control=message[1], value=message[2], time=miditime))
+            if self.debug:
+                logging.info('deltatime: ' + str(deltatime) + ' msg: ' + str(message) + ' activecomp: ' + str(self.activesense))
+            self.time_last_msg = datetime.now()
 
 
 # main
@@ -105,7 +105,7 @@ def main():
     parser.add_argument(
         '-a', '--auto', type=int, help='auto mode silence timeout when to record a new track', default=0, metavar="SECS")
     parser.add_argument(
-        '-v', '--verbose', action="store_true", help='debug mode')
+        '-v', '--verbose', action="store_true", help='debug mode, this can have impact on timings')
     args = parser.parse_args()
 
     # init
@@ -114,12 +114,12 @@ def main():
         format='%(asctime)s.%(msecs)03d %(message)s',
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
-    recorder = MidiRecorder()
     timeout = timedelta(seconds=args.auto)
     if args.auto:
         filename = args.name + '_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.mid'
     else:
         filename = args.name + '.mid'
+    recorder = MidiRecorder()
 
     # option list devices
 
@@ -141,7 +141,7 @@ def main():
         # program loop
 
         while True:
-            time.sleep(0.001)
+            time.sleep(0.01)
             # in auto mode take care to produce new tracks after a certain break timeout
             if args.auto:
                 if datetime.now() > recorder.time_last_msg + timeout:

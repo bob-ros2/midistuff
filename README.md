@@ -48,6 +48,10 @@ python midirec.py -a 30
 2023-09-18 19:29:01.695 Save MIDI file track_20230918-192652.mid
 2023-09-18 19:29:01.695 Timeout exceeded, starting a new track
 2023-09-18 19:29:01.700 Waiting for first event ...
+
+# additionally there are two OS wrapper scripts available which simplifies script execution
+# midirec.sh
+# midirec.bat
 ```
 
 ## Contributing

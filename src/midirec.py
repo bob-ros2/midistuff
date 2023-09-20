@@ -64,7 +64,7 @@ class MidiRecorder(object):
         """Start recording of a new Track."""
         self.tempo = tempo
         self.debug = debug
-        self.activesense = 0
+        self.absolute_time = 0
         self.mid = MidiFile()
         self.track = MidiTrack()
         self.mid.tracks.append(self.track)
@@ -77,16 +77,16 @@ class MidiRecorder(object):
             self.msg = None
             self.__call__(msg)
         message, deltatime = event
-        self.activesense += deltatime
+        self.absolute_time += deltatime
         if message[0] != 254: # ignore active sense
-            miditime = int(round(mido.second2tick(self.activesense, self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
+            miditime = int(round(mido.second2tick(self.absolute_time, self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
             if message[0] == 144:
                 self.track.append(Message('note_on', note=message[1], velocity=message[2], time=miditime))
-                self.activesense = 0
+                self.absolute_time = 0
             elif message[0] == 176:
                 self.track.append(Message('control_change', channel=1, control=message[1], value=message[2], time=miditime))
             if self.debug:
-                logging.info('deltatime: ' + str(deltatime) + ' msg: ' + str(message) + ' activecomp: ' + str(self.activesense))
+                logging.info('deltatime: ' + str(deltatime) + ' msg: ' + str(message) + ' activecomp: ' + str(self.absolute_time))
             self.time_last_msg = datetime.now()
 
 

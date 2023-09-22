@@ -1,6 +1,6 @@
 # MIDISTUFF
 
-A very simple MIDI recorder which either can be used as importable library or as standalone script. It works on multiple plattforms with connected MIDI interface.
+A very simple MIDI recorder which either can be used as importable library or as standalone script. It can handle all MIDI Channel Voice Messages. It works on multiple plattforms with connected MIDI interface.
 
 This project is still in Beta phase and timings may jitter!
 

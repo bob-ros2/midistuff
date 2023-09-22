@@ -18,8 +18,6 @@ import sys, time, logging, argparse, rtmidi, mido
 from datetime import datetime, timedelta
 from mido import Message, MidiTrack, MidiFile
 
-# https://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
-
 # library
 
 class MidiRecorder(object):
@@ -62,7 +60,7 @@ class MidiRecorder(object):
             self.msg = self.midiin.get_message()
             if self.msg:
                 message, deltatime = self.msg
-                if message[0] != 254: #active sense ignore
+                if message[0] != 254: # active sense ignore
                     if message[0]:
                         self.time_last_msg = datetime.now()
                         return
@@ -75,8 +73,8 @@ class MidiRecorder(object):
         """Start recording of a new Track."""
         self.tempo = tempo
         self.debug = debug
-        self.absolute_time = 0
-        self.mid = MidiFile()
+        self.abstime = 0
+        self.mid = MidiFile(type=0)
         self.track = MidiTrack()
         self.mid.tracks.append(self.track)
         self.midiin.set_callback(self)
@@ -87,43 +85,43 @@ class MidiRecorder(object):
             msg = self.msg
             self.msg = None
             self.__call__(msg)
-        message, deltatime = event
-        channel = message[0]&0x0f
-        self.absolute_time += deltatime
-        if message[0] != 254: # ignore active sense
-            miditime = int(round(mido.second2tick(self.absolute_time, self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
+        msg, deltatime = event
+        channel = msg[0] & 0x0F
+        self.abstime += deltatime
+        if msg[0] != 254: # ignore active sense
+            miditime = int(round(mido.second2tick(self.abstime, self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
 
-            if message[0]>>4 == self.STAT_NON:
-                self.track.append(Message('note_on', channel=channel, note=message[1], velocity=message[2], time=miditime))
-                if self.debug: self.verbose('note_on', message, deltatime)
-                self.absolute_time = 0
-            elif message[0]>>4 == self.STAT_NOFF:
-                self.track.append(Message('note_off', channel=channel, note=message[1], velocity=message[2], time=miditime))
-                if self.debug: self.verbose('note_off', message, deltatime)
-                self.absolute_time = 0
-            elif message[0]>>4 == self.STAT_PKP:
-                self.track.append(Message('polytouch', channel=channel, control=message[1], value=message[2], time=miditime))
-                if self.debug: self.verbose('polytouch', message, deltatime)
-            elif message[0]>>4 == self.STAT_CCHNG:
-                self.track.append(Message('control_change', channel=channel, control=message[1], value=message[2], time=miditime))
-                if self.debug: self.verbose('control_change', message, deltatime)
-            elif message[0]>>4 == self.STAT_PCHNG:
-                self.track.append(Message('program_change', channel=channel, control=message[1], value=message[2], time=miditime))
-                if self.debug: self.verbose('program_change', message, deltatime)
-            elif message[0]>>4 == self.STAT_AFTERT:
-                self.track.append(Message('aftertouch', channel=channel, control=message[1], value=message[2], time=miditime))
-                if self.debug: self.verbose('aftertouch', message, deltatime)
-            elif message[0]>>4 == self.STAT_PWHEEL:
-                self.track.append(Message('pitchwheel', channel=channel, control=message[1], value=message[2], time=miditime))
-                if self.debug: self.verbose('pitchwheel', message, deltatime)
+            if msg[0]>>4 == self.STAT_NON:
+                self.track.append(Message('note_on', channel=channel, note=msg[1], velocity=msg[2], time=miditime))
+                if self.debug: self.verbose('note_on', msg, deltatime)
+                self.abstime = 0
+            elif msg[0]>>4 == self.STAT_NOFF:
+                self.track.append(Message('note_off', channel=channel, note=msg[1], velocity=msg[2], time=miditime))
+                if self.debug: self.verbose('note_off', msg, deltatime)
+                self.abstime = 0
+            elif msg[0]>>4 == self.STAT_PKP:
+                self.track.append(Message('polytouch', channel=channel, control=msg[1], value=msg[2], time=miditime))
+                if self.debug: self.verbose('polytouch', msg, deltatime)
+            elif msg[0]>>4 == self.STAT_CCHNG:
+                self.track.append(Message('control_change', channel=channel, control=msg[1], value=msg[2], time=miditime))
+                if self.debug: self.verbose('control_change', msg, deltatime)
+            elif msg[0]>>4 == self.STAT_PCHNG:
+                self.track.append(Message('program_change', channel=channel, control=msg[1], value=msg[2], time=miditime))
+                if self.debug: self.verbose('program_change', msg, deltatime)
+            elif msg[0]>>4 == self.STAT_AFTERT:
+                self.track.append(Message('aftertouch', channel=channel, control=msg[1], value=msg[2], time=miditime))
+                if self.debug: self.verbose('aftertouch', msg, deltatime)
+            elif msg[0]>>4 == self.STAT_PWHEEL:
+                self.track.append(Message('pitchwheel', channel=channel, control=msg[1], value=msg[2], time=miditime))
+                if self.debug: self.verbose('pitchwheel', msg, deltatime)
             elif self.debug:
-                self.verbose('unknown', message, deltatime)
+                self.verbose('unknown', msg, deltatime)
 
             self.time_last_msg = datetime.now()
 
-    def verbose(self, name, message, deltatime):
+    def verbose(self, name, msg, deltatime):
         logging.info("%-14s %s channel: %2d delta: %6.3f absolute: %6.3f msg: %s" 
-            % (name, '{0:b}'.format(message[0]), message[0]&0x0f, deltatime, self.absolute_time, str(message)))
+            % (name, '{0:b}'.format(msg[0]), msg[0] & 0x0F, deltatime, self.abstime, str(msg)))
 
 
 # main

@@ -6,8 +6,6 @@ if /i "%choice%" == "0" goto single
 if /i "%choice%" == "1" goto multi
 goto end
 
-echo To stop recording use CTRL+C
-
 :single
 python midirec.py
 goto end

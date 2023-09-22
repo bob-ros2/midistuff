@@ -77,14 +77,11 @@ class MidiRecorder(object):
         self.mid = MidiFile(type=0)
         self.track = MidiTrack()
         self.mid.tracks.append(self.track)
+        if self.msg: self.__call__(self.msg)
         self.midiin.set_callback(self)
 
     def __call__(self, event, data=None):
         """This function is called for every incoming event."""
-        if self.msg: # process once very first event
-            msg = self.msg
-            self.msg = None
-            self.__call__(msg)
         msg, deltatime = event
         channel = msg[0] & 0x0F
         self.abstime += deltatime

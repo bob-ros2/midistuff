@@ -18,6 +18,8 @@ import sys, time, logging, argparse, rtmidi, mido
 from datetime import datetime, timedelta
 from mido import Message, MidiTrack, MidiFile
 
+# https://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
+
 # library
 
 class MidiRecorder(object):
@@ -27,6 +29,15 @@ class MidiRecorder(object):
         self.time_last_msg = datetime.now()
         self.midiin = rtmidi.MidiIn()
         self.ports = self.midiin.get_ports()
+
+    # channel voice messages
+    STAT_NOFF   = 0b1000 # Note Off event
+    STAT_NON    = 0b1001 # Note On event
+    STAT_PKP    = 0b1010 # Polyphonic Key Pressure (Aftertouch)
+    STAT_CCHNG  = 0b1011 # Control Change
+    STAT_PCHNG  = 0b1100 # Program Change
+    STAT_AFTERT = 0b1101 # Channel Pressure (After-touch)
+    STAT_PWHEEL = 0b1110 # Pitch Wheel Change
 
     def get_ports(self):
         """Get MIDI port list determined in the init constructor."""
@@ -77,17 +88,42 @@ class MidiRecorder(object):
             self.msg = None
             self.__call__(msg)
         message, deltatime = event
+        channel = message[0]&0x0f
         self.absolute_time += deltatime
         if message[0] != 254: # ignore active sense
             miditime = int(round(mido.second2tick(self.absolute_time, self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
-            if message[0] == 144:
-                self.track.append(Message('note_on', note=message[1], velocity=message[2], time=miditime))
+
+            if message[0]>>4 == self.STAT_NON:
+                self.track.append(Message('note_on', channel=channel, note=message[1], velocity=message[2], time=miditime))
+                if self.debug: self.verbose('note_on', message, deltatime)
                 self.absolute_time = 0
-            elif message[0] == 176:
-                self.track.append(Message('control_change', channel=1, control=message[1], value=message[2], time=miditime))
-            if self.debug:
-                logging.info('deltatime: ' + str(deltatime) + ' msg: ' + str(message) + ' activecomp: ' + str(self.absolute_time))
+            elif message[0]>>4 == self.STAT_NOFF:
+                self.track.append(Message('note_off', channel=channel, note=message[1], velocity=message[2], time=miditime))
+                if self.debug: self.verbose('note_off', message, deltatime)
+                self.absolute_time = 0
+            elif message[0]>>4 == self.STAT_PKP:
+                self.track.append(Message('polytouch', channel=channel, control=message[1], value=message[2], time=miditime))
+                if self.debug: self.verbose('polytouch', message, deltatime)
+            elif message[0]>>4 == self.STAT_CCHNG:
+                self.track.append(Message('control_change', channel=channel, control=message[1], value=message[2], time=miditime))
+                if self.debug: self.verbose('control_change', message, deltatime)
+            elif message[0]>>4 == self.STAT_PCHNG:
+                self.track.append(Message('program_change', channel=channel, control=message[1], value=message[2], time=miditime))
+                if self.debug: self.verbose('program_change', message, deltatime)
+            elif message[0]>>4 == self.STAT_AFTERT:
+                self.track.append(Message('aftertouch', channel=channel, control=message[1], value=message[2], time=miditime))
+                if self.debug: self.verbose('aftertouch', message, deltatime)
+            elif message[0]>>4 == self.STAT_PWHEEL:
+                self.track.append(Message('pitchwheel', channel=channel, control=message[1], value=message[2], time=miditime))
+                if self.debug: self.verbose('pitchwheel', message, deltatime)
+            elif self.debug:
+                self.verbose('unknown', message, deltatime)
+
             self.time_last_msg = datetime.now()
+
+    def verbose(self, name, message, deltatime):
+        logging.info("%-14s %s channel: %2d delta: %6.3f absolute: %6.3f msg: %s" 
+            % (name, '{0:b}'.format(message[0]), message[0]&0x0f, deltatime, self.absolute_time, str(message)))
 
 
 # main
@@ -161,6 +197,7 @@ def main():
         logging.info("Exception: " + type(e).__name__ + ': ' + str(e))
         sys.exit(1)
 
+    recorder.close_port()
     logging.info("Save MIDI file " + filename)
     recorder.save_track(filename)
 

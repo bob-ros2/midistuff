@@ -31,7 +31,7 @@ class MidiRecorder(object):
     # channel voice messages
     STAT_NOFF   = 0b1000 # Note Off event
     STAT_NON    = 0b1001 # Note On event
-    STAT_PKEYP  = 0b1010 # Polyphonic Key Pressure (Aftertouch)
+    STAT_PKEYPR = 0b1010 # Polyphonic Key Pressure (Aftertouch)
     STAT_CCHNG  = 0b1011 # Control Change
     STAT_PCHNG  = 0b1100 # Program Change
     STAT_CHANPR = 0b1101 # Channel Pressure (After-touch)
@@ -86,30 +86,38 @@ class MidiRecorder(object):
         channel = msg[0] & 0x0F
         self.abstime += deltatime
         if msg[0] != 254: # ignore active sense
-            miditime = int(round(mido.second2tick(self.abstime, self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
+            miditime = int(round(mido.second2tick(self.abstime, 
+                self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
 
-            if msg[0]>>4 == self.STAT_NON:
-                self.track.append(Message('note_on', channel=channel, note=msg[1], velocity=msg[2], time=miditime))
+            if msg[0] >> 4 == self.STAT_NON:
+                self.track.append(Message('note_on', channel=channel, 
+                    note=msg[1], velocity=msg[2], time=miditime))
                 if self.debug: self.verbose('note_on', msg, deltatime)
                 self.abstime = 0
-            elif msg[0]>>4 == self.STAT_NOFF:
-                self.track.append(Message('note_off', channel=channel, note=msg[1], velocity=msg[2], time=miditime))
+            elif msg[0] >> 4 == self.STAT_NOFF:
+                self.track.append(Message('note_off', channel=channel, 
+                    note=msg[1], velocity=msg[2], time=miditime))
                 if self.debug: self.verbose('note_off', msg, deltatime)
                 self.abstime = 0
-            elif msg[0]>>4 == self.STAT_PKEYP:
-                self.track.append(Message('polytouch', channel=channel, control=msg[1], value=msg[2], time=miditime))
+            elif msg[0] >> 4 == self.STAT_PKEYPR:
+                self.track.append(Message('polytouch', channel=channel, 
+                    control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('polytouch', msg, deltatime)
-            elif msg[0]>>4 == self.STAT_CCHNG:
-                self.track.append(Message('control_change', channel=channel, control=msg[1], value=msg[2], time=miditime))
+            elif msg[0] >> 4 == self.STAT_CCHNG:
+                self.track.append(Message('control_change', channel=channel, 
+                    control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('control_change', msg, deltatime)
-            elif msg[0]>>4 == self.STAT_PCHNG:
-                self.track.append(Message('program_change', channel=channel, control=msg[1], value=msg[2], time=miditime))
+            elif msg[0] >> 4 == self.STAT_PCHNG:
+                self.track.append(Message('program_change', channel=channel, 
+                    control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('program_change', msg, deltatime)
-            elif msg[0]>>4 == self.STAT_CHANPR:
-                self.track.append(Message('aftertouch', channel=channel, control=msg[1], value=msg[2], time=miditime))
+            elif msg[0] >> 4 == self.STAT_CHANPR:
+                self.track.append(Message('aftertouch', channel=channel, 
+                    control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('aftertouch', msg, deltatime)
-            elif msg[0]>>4 == self.STAT_PWHEEL:
-                self.track.append(Message('pitchwheel', channel=channel, control=msg[1], value=msg[2], time=miditime))
+            elif msg[0] >> 4 == self.STAT_PWHEEL:
+                self.track.append(Message('pitchwheel', channel=channel, 
+                    control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('pitchwheel', msg, deltatime)
             elif self.debug:
                 self.verbose('unknown', msg, deltatime)
@@ -117,8 +125,10 @@ class MidiRecorder(object):
             self.time_last_msg = datetime.now()
 
     def verbose(self, name, msg, deltatime):
-        logging.info("%-14s %s channel: %2d delta: %6.3f absolute: %6.3f msg: %s" 
-            % (name, '{0:b}'.format(msg[0]), msg[0] & 0x0F, deltatime, self.abstime, str(msg)))
+        logging.info(
+            "%-14s %s channel: %2d delta: %6.3f absolute: %6.3f msg: %s" 
+            % (name, '{0:b}'.format(msg[0]), msg[0] & 0x0F, 
+               deltatime, self.abstime, str(msg)))
 
 
 # main
@@ -128,15 +138,28 @@ def main():
         description='The very simple MIDI recorder.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '-l', '--list', action="store_true", help='list available devices')
+        '-l', '--list', 
+        action="store_true", 
+        help='list available devices')
     parser.add_argument(
-        '-d', '--device', type=int, help='MIDI device to be opened by index', default=0)
+        '-d', '--device', 
+        type=int, 
+        help='MIDI device to be opened by index', 
+        default=0)
     parser.add_argument(
-        '-n', '--name', type=str, help='name of MIDI file(s) to be stored, can be a path', default="track")
+        '-n', '--name', 
+        type=str, 
+        help='name of MIDI file(s) to be stored, can be a path', 
+        default="track")
     parser.add_argument(
-        '-a', '--auto', type=int, help='auto mode silence timeout when to record a new track', default=0, metavar="SECS")
+        '-a', '--auto', 
+        type=int, 
+        help='auto mode silence timeout when to record a new track', 
+        default=0, metavar="SECS")
     parser.add_argument(
-        '-v', '--verbose', action="store_true", help='debug mode, this can have impact on timings')
+        '-v', '--verbose', 
+        action="store_true", 
+        help='debug mode, this can have impact on timings')
     args = parser.parse_args()
 
     # init
@@ -147,7 +170,8 @@ def main():
         datefmt='%Y-%m-%d %H:%M:%S')
     timeout = timedelta(seconds=args.auto)
     if args.auto:
-        filename = args.name + '_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.mid'
+        filename = args.name + '_' + datetime.now().strftime(
+            "%Y%m%d-%H%M%S") + '.mid'
     else:
         filename = args.name + '.mid'
     recorder = MidiRecorder()
@@ -173,8 +197,10 @@ def main():
 
         while True:
             time.sleep(0.01)
-            # nothing to do here, the mido event callback runs in another thread
-            # in auto mode take care to produce new tracks after a certain break timeout
+            # nothing to do here, the mido event callback runs in 
+            # another thread
+            # in auto mode take care to produce new tracks after a certain 
+            # break timeout
             if args.auto:
                 if datetime.now() > recorder.time_last_msg + timeout:
                     logging.info("Save MIDI file " + filename)
@@ -184,7 +210,8 @@ def main():
                     recorder.open_port(args.device)
                     logging.info("Waiting for first event ...")
                     recorder.wait_first_event()
-                    filename = args.name + '_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.mid'
+                    filename = args.name + '_' 
+                    + datetime.now().strftime("%Y%m%d-%H%M%S") + '.mid'
                     recorder.start_recording(debug=args.verbose)
                     logging.info("Recording started")
     except KeyboardInterrupt:

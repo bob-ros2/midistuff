@@ -219,7 +219,7 @@ if __name__ == '__main__':
         pass
     except Exception as e:
         logging.info("%s: %s %s" 
-            % (type(e).__name__, str(e)), str(traceback.format_exception(e)))
+            % (type(e).__name__, str(e), str(traceback.format_exception(e))))
         sys.exit(1)
 
     recorder.close_port()

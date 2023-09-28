@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import sys, time, logging, argparse, rtmidi, mido
+import sys, time, logging, traceback, argparse, rtmidi, mido
 from datetime import datetime, timedelta
 from mido import Message, MidiTrack, MidiFile
 
@@ -125,15 +125,16 @@ class MidiRecorder(object):
             self.time_last_msg = datetime.now()
 
     def verbose(self, name, msg, deltatime):
+        """Prints incoming event."""
         logging.info(
             "%-14s %s channel: %2d delta: %6.3f absolute: %6.3f msg: %s" 
             % (name, '{0:b}'.format(msg[0]), msg[0] & 0x0F, 
                deltatime, self.abstime, str(msg)))
 
 
-# main
+# entry point as script
 
-def main():
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='The very simple MIDI recorder.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -210,21 +211,17 @@ def main():
                     recorder.open_port(args.device)
                     logging.info("Waiting for first event ...")
                     recorder.wait_first_event()
-                    filename = args.name + '_' 
-                    + datetime.now().strftime("%Y%m%d-%H%M%S") + '.mid'
+                    filename = "%s_%s.mid" % ( 
+                        args.name, datetime.now().strftime("%Y%m%d-%H%M%S"))
                     recorder.start_recording(debug=args.verbose)
                     logging.info("Recording started")
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        logging.info("Exception: " + type(e).__name__ + ': ' + str(e))
+        logging.info("%s: %s %s" 
+            % (type(e).__name__, str(e)), str(traceback.format_exception(e)))
         sys.exit(1)
 
     recorder.close_port()
     logging.info("Save MIDI file " + filename)
     recorder.save_track(filename)
-
-# entry point as script
-
-if __name__ == '__main__':
-    main()

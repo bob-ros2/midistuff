@@ -29,13 +29,13 @@ class MidiRecorder(object):
         self.ports = self.midiin.get_ports()
 
     # channel voice messages
-    STAT_NOFF   = 0b1000 # Note Off event
-    STAT_NON    = 0b1001 # Note On event
-    STAT_PKEYPR = 0b1010 # Polyphonic Key Pressure (Aftertouch)
-    STAT_CCHNG  = 0b1011 # Control Change
-    STAT_PCHNG  = 0b1100 # Program Change
-    STAT_CHANPR = 0b1101 # Channel Pressure (After-touch)
-    STAT_PWHEEL = 0b1110 # Pitch Wheel Change
+    STAT_NOTE_OFF       = 0b1000 # Note Off event
+    STAT_NOTE_ON        = 0b1001 # Note On event
+    STAT_POLY_KEY_PRESS = 0b1010 # Polyphonic Key Pressure (Aftertouch)
+    STAT_CONTROL_CHANGE = 0b1011 # Control Change
+    STAT_PROGRAM_CHANGE = 0b1100 # Program Change
+    STAT_CHANNEL_PRESS  = 0b1101 # Channel Pressure (After-touch)
+    STAT_PITCH_WHEEL    = 0b1110 # Pitch Wheel Change
 
     def get_ports(self):
         """Get MIDI port list determined in the init constructor."""
@@ -89,33 +89,33 @@ class MidiRecorder(object):
             miditime = int(round(mido.second2tick(self.abstime, 
                 self.mid.ticks_per_beat, mido.bpm2tempo(self.tempo))))
 
-            if msg[0] >> 4 == self.STAT_NON:
+            if msg[0] >> 4 == self.STAT_NOTE_ON:
                 self.track.append(Message('note_on', channel=channel, 
                     note=msg[1], velocity=msg[2], time=miditime))
                 if self.debug: self.verbose('note_on', msg, deltatime)
                 self.abstime = 0
-            elif msg[0] >> 4 == self.STAT_NOFF:
+            elif msg[0] >> 4 == self.STAT_NOTE_OFF:
                 self.track.append(Message('note_off', channel=channel, 
                     note=msg[1], velocity=msg[2], time=miditime))
                 if self.debug: self.verbose('note_off', msg, deltatime)
                 self.abstime = 0
-            elif msg[0] >> 4 == self.STAT_PKEYPR:
+            elif msg[0] >> 4 == self.STAT_POLY_KEY_PRESS:
                 self.track.append(Message('polytouch', channel=channel, 
                     control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('polytouch', msg, deltatime)
-            elif msg[0] >> 4 == self.STAT_CCHNG:
+            elif msg[0] >> 4 == self.STAT_CONTROL_CHANGE:
                 self.track.append(Message('control_change', channel=channel, 
                     control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('control_change', msg, deltatime)
-            elif msg[0] >> 4 == self.STAT_PCHNG:
+            elif msg[0] >> 4 == self.STAT_PROGRAM_CHANGE:
                 self.track.append(Message('program_change', channel=channel, 
                     control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('program_change', msg, deltatime)
-            elif msg[0] >> 4 == self.STAT_CHANPR:
+            elif msg[0] >> 4 == self.STAT_CHANNEL_PRESS:
                 self.track.append(Message('aftertouch', channel=channel, 
                     control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('aftertouch', msg, deltatime)
-            elif msg[0] >> 4 == self.STAT_PWHEEL:
+            elif msg[0] >> 4 == self.STAT_PITCH_WHEEL:
                 self.track.append(Message('pitchwheel', channel=channel, 
                     control=msg[1], value=msg[2], time=miditime))
                 if self.debug: self.verbose('pitchwheel', msg, deltatime)
@@ -129,7 +129,7 @@ class MidiRecorder(object):
         logging.info(
             "%-14s %s channel: %2d delta: %6.3f absolute: %6.3f msg: %s" 
             % (name, '{0:b}'.format(msg[0]), msg[0] & 0x0F, 
-               deltatime, self.abstime, str(msg)))
+            deltatime, self.abstime, str(msg)))
 
 
 # entry point as script

@@ -64,6 +64,7 @@ class MidiRecorder(object):
                     if message[0]:
                         self.time_last_msg = datetime.now()
                         return
+            time.sleep(0.002)
                     
     def save_track(self, path):
         """Save track to MIDI file."""

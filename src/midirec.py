@@ -110,11 +110,11 @@ class MidiRecorder(object):
                 if self.debug: self.verbose('control_change', msg, deltatime)
             elif msg[0] >> 4 == self.STAT_PROGRAM_CHANGE:
                 self.track.append(Message('program_change', channel=channel, 
-                    control=msg[1], value=msg[2], time=miditime))
+                    control=msg[1], time=miditime))
                 if self.debug: self.verbose('program_change', msg, deltatime)
             elif msg[0] >> 4 == self.STAT_CHANNEL_PRESS:
                 self.track.append(Message('aftertouch', channel=channel, 
-                    control=msg[1], value=msg[2], time=miditime))
+                    control=msg[1], time=miditime))
                 if self.debug: self.verbose('aftertouch', msg, deltatime)
             elif msg[0] >> 4 == self.STAT_PITCH_WHEEL:
                 self.track.append(Message('pitchwheel', channel=channel, 
